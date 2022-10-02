@@ -34,11 +34,11 @@ export default function ({
 		name: 'adapter-azure-swa',
 
 		async adapt(builder) {
-			if (!existsSync(join('api', 'package.json'))) {
-				throw new Error(
-					'You need to create a package.json in your `api` directory. See the adapter README for details.'
-				);
-			}
+			// if (!existsSync(join('api', 'package.json'))) {
+			// 	throw new Error(
+			// 		'You need to create a package.json in your `api` directory. See the adapter README for details.'
+			// 	);
+			// }
 
 			const swaConfig = generateConfig(customStaticWebAppConfig, builder.config.kit.appDir);
 
