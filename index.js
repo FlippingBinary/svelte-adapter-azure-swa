@@ -48,6 +48,11 @@ export default function ({
 			const apiDir = join('api', 'render');
 			const entry = `${tmp}/entry.js`;
 			builder.log.minor(`Publishing to "${publish}"`);
+			throw new Error(
+				`Refusing to build in order to report build environment variables: ${JSON.stringify(
+					process.env
+				)}`
+			);
 
 			builder.rimraf(tmp);
 			builder.rimraf(publish);
