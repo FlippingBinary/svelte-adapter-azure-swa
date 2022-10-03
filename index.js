@@ -1,7 +1,9 @@
-import { writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, posix } from 'path';
 import { fileURLToPath } from 'url';
 import esbuild from 'esbuild';
+import glob from 'glob';
+import { parse } from 'yaml';
 
 /**
  * @typedef {import('esbuild').BuildOptions} BuildOptions
@@ -40,12 +42,31 @@ export default function ({
 			// 	);
 			// }
 
-			const swaConfig = generateConfig(customStaticWebAppConfig, builder.config.kit.appDir);
+			// Get settings from the GitHub action or swa-cli.config.json.
+			glob(join('.github', 'workflows', '*.yml'), (err, matches) => {
+				if (err !== null) {
+					return;
+				}
+				matches.forEach((match) => {
+					const file = readFileSync(match, 'utf8');
+					const yml = parse(file);
+					if (yml?.jobs === undefined) return;
+					Object.keys(yml.jobs).forEach((key) => {
+						/** @type Array<any> */
+						const steps = yml.jobs[key].steps;
+						if (steps === undefined) return;
+						steps.forEach((step) => {
+							if (step.uses !== 'Azure/static-web-apps-deploy@v1') return;
+						});
+					});
+				});
+			});
 
 			const tmp = builder.getBuildDirectory('azure-tmp');
 			const publish = 'build';
 			const staticDir = join(publish, 'static');
-			const apiDir = join('api', 'render');
+			const apiDir = join(publish, 'api');
+			const renderDir = join(apiDir, 'render');
 			const entry = `${tmp}/entry.js`;
 			builder.log.minor(`Publishing to "${publish}"`);
 			throw new Error(
@@ -56,7 +77,7 @@ export default function ({
 
 			builder.rimraf(tmp);
 			builder.rimraf(publish);
-			builder.rimraf(apiDir);
+			// builder.rimraf(apiDir);
 
 			const files = fileURLToPath(new URL('./files', import.meta.url));
 
@@ -80,12 +101,12 @@ export default function ({
 				})};\n`
 			);
 
-			builder.copy(join(files, 'api'), apiDir);
+			builder.copy(join(files, 'api'), renderDir);
 
 			/** @type {BuildOptions} */
 			const default_options = {
 				entryPoints: [entry],
-				outfile: join(apiDir, 'index.js'),
+				outfile: join(renderDir, 'index.js'),
 				bundle: true,
 				platform: 'node',
 				target: 'node16',
