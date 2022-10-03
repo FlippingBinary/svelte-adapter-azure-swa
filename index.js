@@ -116,6 +116,39 @@ export default function ({
 			}
 
 			writeFileSync(`${publish}/staticwebapp.config.json`, JSON.stringify(swaConfig));
+
+			// Ensuring the existence of `package.json` prevents api/render/index.js from being
+			// treated as an ES module file.
+			writeFileSync(join(apiDir, 'package.json'), '{}');
+
+			// The host.json or local.settings.json is required to run a function.
+			writeFileSync(
+				join(apiDir, 'host.json'),
+				JSON.stringify({
+					version: '2.0',
+					extensionBundle: {
+						id: 'Microsoft.Azure.Functions.ExtensionBundle',
+						version: '[2.*, 3.0.0)',
+						// Setting `watchFiles` to the function so changes to it will be picked up immediately.
+						// This makes it possible to start swa with `vite dev` and leave it running during development.
+						// Changes to the function still have to be manually initiated with a `npm run build` in another
+						// window which limits the usefulness, but this is still a sensible default.
+						watchFiles: [join(renderDir, 'index.js')]
+					}
+				})
+			);
+
+			// The host.json or local.settings.json is required to run a function.
+			writeFileSync(
+				join(apiDir, 'local.settings.json'),
+				JSON.stringify({
+					IsEncrypted: false,
+					Values: {
+						// This prevents an error about being unable to determine runtime
+						FUNCTIONS_WORKER_RUNTIME: 'node'
+					}
+				})
+			);
 		}
 	};
 }
