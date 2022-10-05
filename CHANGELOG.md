@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/compare/v0.10.0...v0.11.0) (2022-10-05)
+
+
+### Features
+
+* generate sourcemaps ([#75](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/issues/75)) ([90e19bd](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/commit/90e19bdbec8dbc7833d54246bf61bbf3d9c93d89))
+
 ## [0.10.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.9.0...v0.10.0) (2022-08-23)
 
 
