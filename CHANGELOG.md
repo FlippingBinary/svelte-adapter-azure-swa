@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/compare/v0.10.0...v0.11.0) (2022-10-13)
+
+
+### Features
+
+* generate sourcemaps ([#75](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/issues/75)) ([90e19bd](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/commit/90e19bdbec8dbc7833d54246bf61bbf3d9c93d89))
+
+
+### Bug Fixes
+
+* handle multiple Set-Cookie headers ([#74](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/issues/74)) ([5a6a64f](https://www.github.com/FlippingBinary/svelte-adapter-azure-swa/commit/5a6a64f42349aad0da2d61b11e63189130eaf1dd))
+
 ## [0.10.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.9.0...v0.10.0) (2022-08-23)
 
 
