@@ -24,9 +24,9 @@ describe('generateConfig', () => {
 				rewrite: '/api/__render'
 			},
 			platform: {
-				apiRuntime: 'node:16'
+				apiRuntime: 'node:18'
 			},
-			routes: [
+			routes: expect.arrayContaining([
 				{
 					methods: ['POST', 'PUT', 'DELETE'],
 					rewrite: '/api/__render',
@@ -38,7 +38,7 @@ describe('generateConfig', () => {
 					},
 					route: '/appDir/immutable/*'
 				}
-			]
+			])
 		});
 	});
 
@@ -53,9 +53,13 @@ describe('generateConfig', () => {
 
 	test('accepts custom config', () => {
 		const result = generateConfig({
+			platform: {
+				apiRuntime: 'node:20'
+			},
 			globalHeaders: { 'X-Foo': 'bar' }
 		});
 		expect(result.globalHeaders).toStrictEqual({ 'X-Foo': 'bar' });
+		expect(result.platform.apiRuntime).toBe('node:20');
 	});
 });
 
@@ -66,14 +70,36 @@ describe('adapt', () => {
 		await adapter.adapt(builder);
 		expect(builder.writePrerendered).toBeCalled();
 		expect(builder.writeClient).toBeCalled();
+		expect(builder.copy).toBeCalledWith(expect.stringContaining('api'), 'build/server');
 	});
 
-	test('throws error when no package.json', async () => {
-		existsSync.mockImplementationOnce(() => false);
-
-		const adapter = azureAdapter();
+	test('writes to custom api directory', async () => {
+		const adapter = azureAdapter({ apiDir: 'custom/api' });
 		const builder = getMockBuilder();
-		await expect(adapter.adapt(builder)).rejects.toThrowError('You need to create a package.json');
+		await adapter.adapt(builder);
+		expect(writeFileSync).toBeCalledWith(
+			'custom/api/sk_render/function.json',
+			expect.stringContaining('__render')
+		);
+		// we don't copy the required function files to a custom API directory
+		expect(builder.copy).not.toBeCalledWith(expect.stringContaining('api'), 'custom/api');
+	});
+
+	test('writes to custom static directory', async () => {
+		vi.mocked(existsSync).mockImplementationOnce(() => false);
+		const adapter = azureAdapter({ staticDir: 'custom/static' });
+		const builder = getMockBuilder();
+		await adapter.adapt(builder);
+		expect(builder.writeClient).toBeCalledWith('custom/static');
+		expect(builder.writePrerendered).toBeCalledWith('custom/static');
+	});
+
+	test('logs warning when custom api directory set and required file does not exist', async () => {
+		vi.mocked(existsSync).mockImplementationOnce(() => false);
+		const adapter = azureAdapter({ apiDir: 'custom/api' });
+		const builder = getMockBuilder();
+		await adapter.adapt(builder);
+		expect(builder.log.warn).toBeCalled();
 	});
 
 	test('adds index.html when root not prerendered', async () => {
@@ -101,6 +127,34 @@ describe('adapt', () => {
 			)
 		);
 	});
+
+	test.each(['/api', '/api/foo'])('throws error when the app defines %s route', async (routeId) => {
+		const adapter = azureAdapter();
+		const builder = getMockBuilder();
+		builder.routes.push({
+			id: routeId
+		});
+		await expect(adapter.adapt(builder)).rejects.toThrowError(
+			'Conflicting routes detected. Please rename the routes listed above.'
+		);
+	});
+
+	test('does not throw error for /api route if allowReservedSwaRoutes is defined', async () => {
+		const adapter = azureAdapter({ allowReservedSwaRoutes: true });
+		const builder = getMockBuilder();
+		builder.routes.push({
+			id: '/api'
+		});
+		await expect(adapter.adapt(builder)).resolves.not.toThrow();
+	});
+
+	test('handles null routes', async () => {
+		// builder.routes was added in 1.5 with route-level config
+		const adapter = azureAdapter();
+		const builder = getMockBuilder();
+		builder.routes = null;
+		await expect(adapter.adapt(builder)).resolves.not.toThrow();
+	});
 });
 
 /** @returns {import('@sveltejs/kit').Builder} */
@@ -112,7 +166,9 @@ function getMockBuilder() {
 			}
 		},
 		log: {
-			minor: vi.fn()
+			minor: vi.fn(),
+			warn: vi.fn(),
+			error: vi.fn()
 		},
 		prerendered: {
 			paths: ['/']
@@ -123,6 +179,14 @@ function getMockBuilder() {
 		getServerDirectory: vi.fn(() => 'server'),
 		rimraf: vi.fn(),
 		writeClient: vi.fn(),
-		writePrerendered: vi.fn()
+		writePrerendered: vi.fn(),
+		routes: [
+			{
+				id: '/'
+			},
+			{
+				id: '/about'
+			}
+		]
 	};
 }

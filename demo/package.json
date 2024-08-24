@@ -7,23 +7,24 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch"
-	},
-	"engines": {
-		"npm": ">=8.7.0 < 9",
-		"node": ">=16.14.0 < 17"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
+		"test": "playwright test"
 	},
 	"devDependencies": {
-		"@fontsource/fira-mono": "^4.5.0",
+		"@fontsource/fira-mono": "^4.5.10",
 		"@neoconfetti/svelte": "^1.0.0",
-		"@sveltejs/adapter-auto": "next",
-		"@sveltejs/kit": "next",
-		"@types/cookie": "^0.5.1",
-		"svelte": "^3.46.0",
+		"@playwright/test": "^1.28.1",
+		"@sveltejs/adapter-auto": "^3.0.0",
+		"@sveltejs/kit": "^2.0.0",
+		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"svelte": "^4.2.7",
 		"svelte-adapter-azure-swa": "file:..",
-		"svelte-check": "^2.7.1",
-		"typescript": "^4.7.4",
-		"vite": "^3.1.0"
+		"svelte-check": "^3.6.0",
+		"typescript": "^5.0.0",
+		"vite": "^5.0.3"
 	},
-	"type": "module"
+	"type": "module",
+	"engines": {
+		"node": ">=18.13 <19"
+	}
 }

@@ -1,6 +1,10 @@
 import { installPolyfills } from '@sveltejs/kit/node/polyfills';
 import { expect, describe, test } from 'vitest';
-import { splitCookiesFromHeaders } from '../files/headers';
+import {
+	splitCookiesFromHeaders,
+	getClientIPFromHeaders,
+	getClientPrincipalFromHeaders
+} from '../files/headers';
 
 installPolyfills();
 
@@ -55,5 +59,71 @@ describe('header processing', () => {
 				}
 			]
 		});
+	});
+});
+
+describe('client ip address detection', () => {
+	test('no header', () => {
+		const headers = new Headers();
+		headers.append('Location', '/');
+		headers.append('Content-Type', 'application/json');
+
+		const ipAddress = getClientIPFromHeaders(headers);
+
+		expect(ipAddress).toBe('127.0.0.1');
+	});
+
+	test('regular header', () => {
+		const headers = new Headers();
+		headers.append('Location', '/');
+		headers.append('Content-Type', 'application/json');
+		headers.append(
+			'X-Forwarded-For',
+			'8.23.191.142:52987, [fd00::d63d:e0b8:bc35:12be:2e17:f3af]:64909'
+		);
+
+		const ipAddress = getClientIPFromHeaders(headers);
+
+		expect(ipAddress).toBe('8.23.191.142');
+	});
+
+	test('no port header', () => {
+		const headers = new Headers();
+		headers.append('Location', '/');
+		headers.append('Content-Type', 'application/json');
+		headers.append('X-Forwarded-For', '8.23.191.142, [fd00::d63d:e0b8:bc35:12be:2e17:f3af]');
+
+		const ipAddress = getClientIPFromHeaders(headers);
+
+		expect(ipAddress).toBe('8.23.191.142');
+	});
+});
+
+describe('client principal parsing', () => {
+	test('parses client principal correctly', () => {
+		const original = {
+			identityProvider: 'aad',
+			userId: '1234',
+			userDetails: 'user@example.net',
+			userRoles: ['authenticated']
+		};
+
+		const headers = new Headers({
+			'x-ms-client-principal': Buffer.from(JSON.stringify(original)).toString('base64')
+		});
+
+		expect(getClientPrincipalFromHeaders(headers)).toStrictEqual(original);
+	});
+
+	test('returns undefined when there is no client principal', () => {
+		expect(getClientPrincipalFromHeaders(new Headers())).toBeUndefined();
+	});
+
+	test('returns undefined if unable to parse', () => {
+		const headers = new Headers({
+			'x-ms-client-principal': 'boom'
+		});
+
+		expect(getClientPrincipalFromHeaders(headers)).toBeUndefined();
 	});
 });

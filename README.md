@@ -1,12 +1,10 @@
 # svelte-adapter-azure-swa
 
-> :warning: WARNING: this project is considered to be in BETA until SvelteKit is available for general use and the Adapter API is stable. Please report any issues you encounter.
-
 Adapter for Svelte apps that creates an Azure Static Web App, using an Azure function for dynamic server rendering. If your app is purely static, you may be able to use [adapter-static](https://www.npmjs.com/package/@sveltejs/adapter-static) instead.
 
-## Usage
+See the [demo folder](https://github.com/geoffrich/svelte-adapter-azure-swa/tree/main/demo) for an example integration with the SvelteKit demo app. The demo is automatically deployed to [Azure SWA](https://polite-desert-00b80111e.2.azurestaticapps.net/) on every commit to the main branch.
 
-See the [demo folder](https://github.com/geoffrich/svelte-adapter-azure-swa/tree/main/demo) for an example integration with the SvelteKit demo app.
+## Usage
 
 Run `npm install -D svelte-adapter-azure-swa`.
 
@@ -23,27 +21,13 @@ export default {
 };
 ```
 
-You will need to create an `api/` folder in your project root containing a [`host.json`](https://docs.microsoft.com/en-us/azure/azure-functions/functions-host-json) and a `package.json` (see samples below). The adapter will output the `render` Azure function for SSR in that folder. The `api` folder needs to be in your repo so that Azure can recognize the API at build time. However, you can add `api/render` to your .gitignore so that the generated function is not in source control.
+And, if you use TypeScript, add this to the top of your `src/app.d.ts`:
 
-### Sample `host.json`
-
-```json
-{
-	"version": "2.0",
-	"extensionBundle": {
-		"id": "Microsoft.Azure.Functions.ExtensionBundle",
-		"version": "[2.*, 3.0.0)"
-	}
-}
+```ts
+/// <reference types="svelte-adapter-azure-swa" />
 ```
 
-### Sample `package.json`
-
-It's okay for this to be empty. Not including it causes the Azure Function build to fail.
-
-```json
-{}
-```
+:warning: **IMPORTANT**: you also need to configure your build so that your SvelteKit site deploys properly. Failing to do so will prevent the project from building and deploying. See the next section for instructions.
 
 ## Azure configuration
 
@@ -52,8 +36,22 @@ When deploying to Azure, you will need to properly [configure your build](https:
 | property          | value          |
 | ----------------- | -------------- |
 | `app_location`    | `./`           |
-| `api_location`    | `api`          |
+| `api_location`    | `build/server` |
 | `output_location` | `build/static` |
+
+If you use a custom API directory (see [below](#apiDir)), your `api_location` will be the same as the value you pass to `apiDir`.
+
+If your `app_location` is in a subfolder (e.g. `./my_app_location`), then your `api_location` should include the path to that subfolder (e.g. `my_app_location/build/server`.) `output_location` should still be `build/static`.
+
+### Building with the correct version of Node
+
+Oryx, Azure's build system, may attempt to build your application with an EOL version of Node that SvelteKit doesn't support. If you get an error like "Unsupported engine - Not compatible with your version of node/npm", you can force Oryx to use the correct version by setting an `engines` field in your app's `package.json`:
+
+```js
+"engines": {
+	"node": ">=18.13 <19"
+}
+```
 
 ## Running locally with the Azure SWA CLI
 
@@ -68,13 +66,79 @@ To run the CLI, install `@azure/static-web-apps-cli` and the [Azure Functions Co
 	"configurations": {
 		"app": {
 			"outputLocation": "./build/static",
-			"apiLocation": "./api"
+			"apiLocation": "./build/server",
+			"host": "127.0.0.1"
 		}
 	}
 }
 ```
 
 ## Options
+
+### apiDir
+
+The directory where the `sk_render` Azure function for SSR will be placed. Most of the time, you shouldn't need to set this.
+
+By default, the adapter will output the `sk_render` Azure function for SSR in the `build/server` folder. If you want to output it to a different directory instead (e.g. if you have additional Azure functions to deploy), you can set this option.
+
+```js
+import azure from 'svelte-adapter-azure-swa';
+
+export default {
+	kit: {
+		...
+		adapter: azure({
+			apiDir: 'custom/api'
+		})
+	}
+};
+```
+
+If you set this option, you will also need to create a `host.json` and `package.json` in your API directory. The adapter normally generates these files by default, but skips them when a custom API directory is provided to prevent overwriting any existing files. You can see the default files the adapter generates in [this directory](https://github.com/geoffrich/svelte-adapter-azure-swa/tree/main/files/api).
+
+For instance, by default the adapter outputs these files...
+
+```
+build/
+└── server/
+    ├── sk_render/
+    │   ├── function.json
+    │   └── index.js
+    ├── host.json
+    ├── local.settings.json
+    └── package.json
+```
+
+... but only outputs these files when a custom API directory is provided:
+
+```
+custom/
+└── api/
+    └── sk_render/
+        ├── function.json
+        └── index.js
+```
+
+Also note that the adapter reserves the folder prefix `sk_render` and API route prefix `__render` for Azure functions generated by the adapter. So, if you use a custom API directory, you cannot have any other folder starting with `sk_render` or functions available at the `__render` route, since these will conflict with the adapter's Azure functions.
+
+### staticDir
+
+The directory where the static assets will be placed. Most of the time, you shouldn't need to set this.
+
+By default, the adapter will output the static JS, CSS and HTML files to the `build/static` folder. If you want to output it to a different directory instead you can set this option.
+
+```js
+import azure from 'svelte-adapter-azure-swa';
+
+export default {
+	kit: {
+		...
+		adapter: azure({
+			staticDir: 'custom/static'
+		})
+	}
+};
+```
 
 ### customStaticWebAppConfig
 
@@ -111,6 +175,9 @@ export default {
 						'redirect': '/login',
 						'statusCode': 302
 					}
+				},
+				platform: {
+					apiRuntime: 'node:20'
 				}
 			}
 		})
@@ -118,9 +185,28 @@ export default {
 };
 ```
 
+### allowReservedSwaRoutes
+
+In production, Azure SWA will route any requests to `/api` or `/api/*` to the SWA [API backend](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-overview). If you also define SvelteKit routes beginning with `/api`, those requests will work in dev, but return a 404 in production since the request will be routed to the SWA API. Because of this, the adapter will throw an error at build time if it detects any routes beginning with `/api`.
+
+If you want to disable this check, you can set `allowReservedSwaRoutes` to true. However, this will not start routing `/api` requests to your SvelteKit app. SWA does not allow configuring the `/api` route.
+
+```js
+import azure from 'svelte-adapter-azure-swa';
+
+export default {
+	kit: {
+		...
+		adapter: azure({
+			allowReservedSwaRoutes: true
+		})
+	}
+};
+```
+
 ### esbuildOptions
 
-An object containing additional [esbuild options](https://esbuild.github.io/api/#build-api). Currently only supports [external](https://esbuild.github.io/api/#external). If you require additional options to be exposed, plese [open an issue](https://github.com/geoffrich/svelte-adapter-azure-swa/issues).
+An object containing additional [esbuild options](https://esbuild.github.io/api/#build-api). Currently only supports [external](https://esbuild.github.io/api/#external), [keepNames](https://esbuild.github.io/api/#keep-names), and [loader](https://esbuild.github.io/api/#loader). If you require additional options to be exposed, please [open an issue](https://github.com/geoffrich/svelte-adapter-azure-swa/issues).
 
 ```js
 import azure from 'svelte-adapter-azure-swa';
@@ -130,9 +216,66 @@ export default {
 		...
 		adapter: azure({
 			esbuildOptions: {
-				external: ['fsevents']
+				external: ['fsevents'],
+				keepNames: true
 			}
 		})
 	}
 };
+```
+
+## Platform-specific context
+
+SWA provides some information to the backend functions that this adapter makes available as [platform-specific context](https://kit.svelte.dev/docs/adapters#platform-specific-context). This is available in hooks and server routes through the `platform` property on the `RequestEvent`.
+
+To get typings for the `platform` property, reference this adapter in your `src/app.d.ts` as described in the [usage section](#usage).
+
+### `clientPrincipal`
+
+This contains the client principal as parsed from the `x-ms-client-principal` request header. See the [official SWA documentation](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information?tabs=javascript#api-functions) or [the types](index.d.ts) for further details.
+
+This is currently only available when running in production on SWA. In addition, it is only available in certain circumstances in production - see [this adapter issue](https://github.com/geoffrich/svelte-adapter-azure-swa/issues/102) for more details. Please report any issues you encounter.
+
+### `context`
+
+All server requests to your SvelteKit app are handled by an Azure function. This property contains that Azure function's [request context](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object).
+
+## Monorepo support
+
+If you're deploying your app from a monorepo, here's what you need to know.
+
+The build currently fails if you use `pnpm` as a package manager. You can track [this issue](https://github.com/geoffrich/svelte-adapter-azure-swa/issues/135) for updates. For now, you can work around the issue by using `npm` instead.
+
+Also, since your SvelteKit app is in a subfolder of the monorepo, you will need to update your deployment workflow.
+
+For instance, if you have the following folder structure:
+
+```
+apps/
+	├── sveltekit-app
+	└── other-app
+```
+
+The `app_location` and `api_location` in your deployment configuration need to point to the `apps/sveltekit-app` subfolder. `output_location` should remain the same. Here's how that would look for an Azure SWA GitHub workflow:
+
+```diff
+steps:
+	 - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ORANGE_GRASS_0778C6300 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          action: "upload"
+          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
+-         app_location: "./" # App source code path
+-         api_location: "build/server" # Api source code path - optional
++         app_location: "./apps/sveltekit-app" # App source code path
++         api_location: "apps/sveltekit-app/build/server" # Api source code path - optional
+          output_location: "build/static" # Built app content directory - optional
+          ###### End of Repository/Build Configurations ######
 ```

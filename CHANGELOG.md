@@ -1,5 +1,108 @@
 # Changelog
 
+### [0.20.1](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.20.0...v0.20.1) (2024-07-13)
+
+
+### Bug Fixes
+
+* work around SWA issue with empty form bodies ([#179](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/179)) ([d14aae1](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/d14aae1bd35a68ed6836db6277753f2e3619de1b))
+
+## [0.20.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.19.1...v0.20.0) (2024-01-01)
+
+
+### Features
+
+* require SvelteKit 2 and Node 18 ([c77c842](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/c77c842659297a687239b33ba52546285d7b26d3))
+
+### [0.19.1](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.19.0...v0.19.1) (2023-11-20)
+
+
+### Bug Fixes
+
+* do not rewrite /api and /data-api requests to SvelteKit ([#162](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/162)) ([aa36771](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/aa3677133d404cf7bb396ea3f4c41ea026598ce7))
+* do not throw on parsing client principal ([#160](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/160)) ([0fe3eaa](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/0fe3eaa593e3f58044b230957e190cb3011ea4d5))
+
+## [0.19.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.18.0...v0.19.0) (2023-08-17)
+
+
+### Features
+
+* add `loader` to `esbuildOptions` ([#153](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/153)) ([f1f4ec6](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/f1f4ec6800a3d90e8002207c0609939fa1ccc049))
+
+## [0.18.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.17.0...v0.18.0) (2023-08-03)
+
+
+### Features
+
+* add `keepNames` to `esbuildOptions` ([#150](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/150)) ([dbe44ba](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/dbe44ba4d239a4bc1db238b909fd8a5f55b5baf4))
+
+## [0.17.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.16.0...v0.17.0) (2023-07-02)
+
+
+### Features
+
+* allow overriding `platform.apiRuntime` ([#144](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/144)) ([fd8241a](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/fd8241a7a02846d846fc291cb4c74a966d00db14))
+* throw error if /api routes defined ([#142](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/142)) ([036cf64](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/036cf64fbedc3f4ec95271be03f75ada66eb7f2e))
+
+## [0.16.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.15.0...v0.16.0) (2023-05-12)
+
+
+### Features
+
+* add `staticDir` setting ([#117](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/117)) ([4f2ff41](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/4f2ff41a8355ce070fc96f7d9c709806a74a2341))
+
+## [0.15.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.14.0...v0.15.0) (2023-03-18)
+
+
+### Features
+
+* add context to the platform object ([#127](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/127)) ([e597d0c](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/e597d0cbd54a0e486a6bedc93d6b8071bb25f2b8))
+
+
+### Bug Fixes
+
+* await server init ([#128](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/128)) ([4900a35](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/4900a351ee78fcecf3050cf0a28696548646cd1a))
+
+## [0.14.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.13.0...v0.14.0) (2023-03-15)
+
+
+### Features
+
+* expose client principal through platform ([#107](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/107)) ([e41f89c](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/e41f89cde57858b76df61a7ba6316f5ac0a4498d))
+
+
+### Bug Fixes
+
+* binary body is incorrectly parsed as UTF-8 ([#123](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/123)) ([4869959](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/48699595be4cabe355f070250780492bba5a1fdb))
+
+## [0.13.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.12.0...v0.13.0) (2023-01-23)
+
+
+### Features
+
+* bump deps to SvelteKit 1.0 ([d050933](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/d050933b237530b6064351fe619c6f36bbee66d2))
+
+## [0.12.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.11.0...v0.12.0) (2022-11-21)
+
+
+### Features
+
+* auto-create required function files ([#92](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/92)) ([c682164](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/c682164dfcc35045fbb66cc1ea31f3a8e253a411))
+* implement getClientAddress ([#71](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/71)) ([56b5380](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/56b5380c8ebb29c2678bb83ea3cbf9189dd09ee6))
+
+## [0.11.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.10.0...v0.11.0) (2022-10-18)
+
+
+### Features
+
+* generate sourcemaps ([#75](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/75)) ([90e19bd](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/90e19bdbec8dbc7833d54246bf61bbf3d9c93d89))
+
+
+### Bug Fixes
+
+* copy over necessary files ([#84](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/84)) ([f503556](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/f5035567c923f1583fd2c3c9330e7668c9334239))
+* handle multiple Set-Cookie headers ([#74](https://www.github.com/geoffrich/svelte-adapter-azure-swa/issues/74)) ([5a6a64f](https://www.github.com/geoffrich/svelte-adapter-azure-swa/commit/5a6a64f42349aad0da2d61b11e63189130eaf1dd))
+
 ## [0.10.0](https://www.github.com/geoffrich/svelte-adapter-azure-swa/compare/v0.9.0...v0.10.0) (2022-08-23)
 
 

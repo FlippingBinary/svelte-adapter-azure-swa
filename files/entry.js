@@ -1,15 +1,20 @@
 import { installPolyfills } from '@sveltejs/kit/node/polyfills';
 import { Server } from 'SERVER';
 import { manifest } from 'MANIFEST';
-import { splitCookiesFromHeaders } from './headers';
+import {
+	getClientIPFromHeaders,
+	getClientPrincipalFromHeaders,
+	splitCookiesFromHeaders
+} from './headers';
 
 // replaced at build time
+// @ts-expect-error
 const debug = DEBUG;
 
 installPolyfills();
 
 const server = new Server(manifest);
-server.init({ env: process.env });
+const initialized = server.init({ env: process.env });
 
 /**
  * @typedef {import('@azure/functions').AzureFunction} AzureFunction
@@ -24,13 +29,33 @@ export async function index(context) {
 	const request = toRequest(context);
 
 	if (debug) {
+		context.log(
+			'Starting request',
+			context?.req?.method,
+			context?.req?.headers?.['x-ms-original-url']
+		);
+		context.log(`Original request: ${JSON.stringify(context)}`);
 		context.log(`Request: ${JSON.stringify(request)}`);
 	}
 
-	const rendered = await server.respond(request);
+	const ipAddress = getClientIPFromHeaders(request.headers);
+	const clientPrincipal = getClientPrincipalFromHeaders(request.headers);
+
+	await initialized;
+	const rendered = await server.respond(request, {
+		getClientAddress() {
+			return ipAddress;
+		},
+		platform: {
+			clientPrincipal,
+			context
+		}
+	});
+
 	const response = await toResponse(rendered);
 
 	if (debug) {
+		context.log(`SK headers: ${JSON.stringify(Object.fromEntries(rendered.headers.entries()))}`);
 		context.log(`Response: ${JSON.stringify(response)}`);
 	}
 
@@ -42,10 +67,16 @@ export async function index(context) {
  * @returns {Request}
  * */
 function toRequest(context) {
-	const { method, headers, rawBody: body } = context.req;
+	const { method, headers, rawBody, body } = context.req;
 	// because we proxy all requests to the render function, the original URL in the request is /api/__render
 	// this header contains the URL the user requested
 	const originalUrl = headers['x-ms-original-url'];
+
+	// SWA strips content-type headers from empty POST requests, but SK form actions require the header
+	// https://github.com/geoffrich/svelte-adapter-azure-swa/issues/178
+	if (method === 'POST' && !body && !headers['content-type']) {
+		headers['content-type'] = 'application/x-www-form-urlencoded';
+	}
 
 	/** @type {RequestInit} */
 	const init = {
@@ -54,7 +85,11 @@ function toRequest(context) {
 	};
 
 	if (method !== 'GET' && method !== 'HEAD') {
-		init.body = typeof body === 'string' ? Buffer.from(body, 'utf-8') : body;
+		init.body = Buffer.isBuffer(body)
+			? body
+			: typeof rawBody === 'string'
+				? Buffer.from(rawBody, 'utf-8')
+				: rawBody;
 	}
 
 	return new Request(originalUrl, init);

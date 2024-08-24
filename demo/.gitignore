@@ -8,4 +8,6 @@ node_modules
 !.env.example
 .vercel
 .output
-/api/render
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+sk_render/
