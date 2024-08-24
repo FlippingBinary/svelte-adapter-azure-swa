@@ -133,7 +133,8 @@ If you want to suppress this error, set allowReservedSwaRoutes to true in your a
 				sourcemap: 'linked',
 				external: esbuildOptions.external,
 				keepNames: esbuildOptions.keepNames,
-				loader: esbuildOptions.loader
+				loader: esbuildOptions.loader,
+				plugins: esbuildOptions.plugins
 			};
 
 			await esbuild.build(default_options);
